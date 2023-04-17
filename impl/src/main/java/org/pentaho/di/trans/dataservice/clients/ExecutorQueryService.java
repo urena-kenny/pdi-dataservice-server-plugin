@@ -62,6 +62,9 @@ public class ExecutorQueryService implements Query.Service {
   // OSGi blueprint constructor
   public ExecutorQueryService( DataServiceResolver resolver ) {
     this.resolver = resolver;
+  }
+
+  private MetastoreLocator getMetaStoreLocator() {
     try {
       Collection<MetastoreLocator> metastoreLocators = PluginServiceLoader.loadServices( MetastoreLocator.class );
       metastoreLocator = metastoreLocators.stream().findFirst().get();
@@ -69,6 +72,7 @@ public class ExecutorQueryService implements Query.Service {
       LogChannel.GENERAL.logError( "Error getting MetastoreLocator", e );
       throw new IllegalStateException( e );
     }
+    return this.metastoreLocator;
   }
 
   @Override public Query prepareQuery( String sqlString, int maxRows, Map<String, String> parameters )
@@ -76,7 +80,7 @@ public class ExecutorQueryService implements Query.Service {
     SQL sql = new SQL( sqlString );
     Query query;
     try {
-      IMetaStore metaStore = metastoreLocator != null ? metastoreLocator.getMetastore() : null;
+      IMetaStore metaStore = getMetaStoreLocator() != null ? getMetaStoreLocator().getMetastore() : null;
       DataServiceExecutor executor = resolver.createBuilder( sql )
         .rowLimit( maxRows )
         .parameters( parameters )
@@ -96,7 +100,7 @@ public class ExecutorQueryService implements Query.Service {
     SQL sql = new SQL( sqlString );
     Query query;
     try {
-      IMetaStore metaStore = metastoreLocator != null ? metastoreLocator.getMetastore() : null;
+      IMetaStore metaStore = getMetaStoreLocator() != null ? getMetaStoreLocator().getMetastore() : null;
       DataServiceExecutor executor = resolver.createBuilder( sql )
         .rowLimit( 0 )
         .windowMode( windowMode )

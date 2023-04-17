@@ -61,14 +61,20 @@ public class AnnotationsQueryService implements Query.Service {
 
   // OSGi blueprint constructor
   public AnnotationsQueryService( final DataServiceResolver resolver ) {
-    try {
-      Collection<MetastoreLocator> metastoreLocators = PluginServiceLoader.loadServices( MetastoreLocator.class );
-      metastoreLocator = metastoreLocators.stream().findFirst().get();
-    } catch ( Exception e ) {
-      LogChannel.GENERAL.logError( "Error getting MetastoreLocator", e );
-      throw new IllegalStateException( e );
-    }
     this.resolver = resolver;
+  }
+
+  protected MetastoreLocator getMetastoreLocator() {
+    if(metastoreLocator == null){
+      try {
+        Collection<MetastoreLocator> metastoreLocators = PluginServiceLoader.loadServices( MetastoreLocator.class );
+        metastoreLocator = metastoreLocators.stream().findFirst().get();
+      } catch ( Exception e ) {
+        LogChannel.GENERAL.logError( "Error getting MetastoreLocator", e );
+        throw new IllegalStateException( e );
+      }
+    }
+    return this.metastoreLocator;
   }
 
   @Override public Query prepareQuery( final String sql, final int maxRows, final Map<String, String> parameters )
@@ -139,7 +145,7 @@ public class AnnotationsQueryService implements Query.Service {
 
       disableAllUnrelatedHops( dataService.getStepname(), serviceTrans, false );
       final Trans trans = getTrans( serviceTrans );
-      trans.setMetaStore( metastoreLocator.getMetastore() );
+      trans.setMetaStore( getMetastoreLocator().getMetastore() );
       if ( !serviceTrans.getTransHopSteps( false ).isEmpty() ) {
         trans.prepareExecution( new String[] {} );
       }
